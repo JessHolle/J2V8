@@ -1,4 +1,4 @@
-ARG sys_image=debian:jessie
+ARG sys_image=debian:jessie-slim
 
 FROM $sys_image
 
@@ -15,13 +15,13 @@ RUN ./install.debian.packages.sh
 
 ENV ANDROID_HOME "/usr/local/android-sdk"
 
-ENV NDK_VERSION "r13b"
+ENV NDK_VERSION "r14b"
 ENV NDK_NAME "android-ndk-$NDK_VERSION-linux-x86_64"
 RUN echo "Preparing Android NDK..." && \
     mkdir -p /build && \
     cd /build && \
     curl -fSOL https://dl.google.com/android/repository/$NDK_NAME.zip && \
-    unzip $NDK_NAME.zip && \
+    unzip -qq $NDK_NAME.zip && \
     rm $NDK_NAME.zip
 
 RUN echo "Preparing Android GCC-Toolchain..." && \
@@ -37,7 +37,7 @@ ENV PATH "$PATH:$ANDROID_HOME/platform-tools"
 RUN mkdir -p ${ANDROID_HOME} && \
     cd ${ANDROID_HOME} && \
     wget -q https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip -O android_tools.zip && \
-    unzip android_tools.zip && \
+    unzip -qq android_tools.zip && \
     rm android_tools.zip
 
 RUN mkdir /usr/local/android-sdk/tools/keymaps && \
@@ -49,7 +49,8 @@ ENV JAVA_HOME "/opt/jdk/jdk1.8.0_131"
 
 ENV PATH ${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools
 
-RUN yes | sdkmanager --licenses
+COPY ./shared/install-android-dependencies.sh /temp/docker/shared
+RUN ./install-android-dependencies.sh
 
 COPY ./shared/install.cmake.sh /temp/docker/shared
 RUN ./install.cmake.sh
@@ -69,7 +70,7 @@ RUN cd /temp && gradle --dry-run
 # Install the Android tools
 RUN sdkmanager emulator
 RUN sdkmanager tools
-RUN sdkmanager "system-images;android-19;default;armeabi-v7a"
+RUN sdkmanager "system-images;android-21;default;armeabi-v7a"
 
 # Required for Android ARM Emulator
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y libqt5widgets5

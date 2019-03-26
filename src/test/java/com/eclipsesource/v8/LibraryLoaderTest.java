@@ -13,6 +13,7 @@ package com.eclipsesource.v8;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
@@ -54,7 +55,7 @@ public class LibraryLoaderTest {
         releaseFilesField = vendorClass.getDeclaredField("LINUX_OS_RELEASE_FILES");
         makeFinalStaticAccessible(releaseFilesField);
 
-        releaseFiles = (String[])releaseFilesField.get(null);
+        releaseFiles = (String[]) releaseFilesField.get(null);
     }
 
     @After
@@ -66,8 +67,15 @@ public class LibraryLoaderTest {
         releaseFilesField.set(null, releaseFiles);
     }
 
+    private static boolean skipTest() {
+        return "android".equalsIgnoreCase(PlatformDetector.OS.getName());
+    }
+
+    private final static String skipMessage = "Skipped test (Cannot detect other platforms when running on Android)";
+
     @Test
     public void testAndroidLibNameStructure() throws Exception {
+        assumeFalse(skipMessage, skipTest()); // conditional skip
         System.setProperty("os.name", "Android");
         System.setProperty("java.specification.vendor", "...");
         System.setProperty("os.arch", "x64");
@@ -113,6 +121,7 @@ public class LibraryLoaderTest {
 
     @Test
     public void testMacOSXLibNameStructure() throws Exception {
+        assumeFalse(skipMessage, skipTest()); // conditional skip
         System.setProperty("os.name", "MacOSX");
         System.setProperty("java.specification.vendor", "Apple");
         System.setProperty("os.arch", "x64");
@@ -122,6 +131,7 @@ public class LibraryLoaderTest {
 
     @Test
     public void testWindowsLibNameStructure() throws Exception {
+        assumeFalse(skipMessage, skipTest()); // conditional skip
         System.setProperty("os.name", "Windows");
         System.setProperty("java.specification.vendor", "Microsoft");
         System.setProperty("os.arch", "x64");

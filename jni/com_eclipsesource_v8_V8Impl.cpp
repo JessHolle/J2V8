@@ -1747,6 +1747,12 @@ JNIEXPORT void JNICALL Java_com_eclipsesource_v8_V8__1setWeak
     }, WeakCallbackType::kFinalizer);
 }
 
+JNIEXPORT void JNICALL Java_com_eclipsesource_v8_V8__1clearWeak
+  (JNIEnv * env, jobject, jlong v8RuntimePtr, jlong objectHandle) {
+    Isolate* isolate = SETUP(env, v8RuntimePtr, );
+    reinterpret_cast<Persistent<Object>*>(objectHandle)->ClearWeak();
+}
+
 JNIEXPORT jboolean JNICALL Java_com_eclipsesource_v8_V8__1isWeak
   (JNIEnv * env, jobject, jlong v8RuntimePtr, jlong objectHandle) {
     Isolate* isolate = SETUP(env, v8RuntimePtr, 0);
@@ -2017,9 +2023,8 @@ jobject getResult(JNIEnv *env, jobject &v8, jlong v8RuntimePtr, Handle<Value> &r
   }
   else if (result->IsArrayBuffer()) {
     ArrayBuffer* arrayBuffer = ArrayBuffer::Cast(*result);
-    if ( arrayBuffer->GetContents().Data() == NULL ) {
-      jobject byteBuffer = env->NewDirectByteBuffer(arrayBuffer->GetContents().Data(), 0);
-      jobject objectResult = env->NewObject(v8ArrayBufferCls, v8ArrayBufferInitMethodID, v8, byteBuffer);
+    if ( arrayBuffer->ByteLength() == 0 || arrayBuffer->GetContents().Data() == NULL ) {
+      jobject objectResult = env->NewObject(v8ArrayBufferCls, v8ArrayBufferInitMethodID, v8, NULL);
       jlong resultHandle = getHandle(env, objectResult);
       v8::Isolate* isolate = reinterpret_cast<V8Runtime*>(v8RuntimePtr)->isolate;
       reinterpret_cast<Persistent<Object>*>(resultHandle)->Reset(isolate, result->ToObject(isolate));

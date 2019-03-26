@@ -43,7 +43,9 @@ public class V8ScriptExecutionExceptionTest {
     @After
     public void tearDown() {
         try {
-            v8.close();
+            if (v8 != null) {
+                v8.close();
+            }
             if (V8.getActiveRuntimes() != 0) {
                 throw new IllegalStateException("V8Runtimes not properly released");
             }
@@ -108,12 +110,11 @@ public class V8ScriptExecutionExceptionTest {
     }
 
     public void voidCallbackWithException() {
-        ((Object) null).toString();
+        throw new RuntimeException("Test Exception");
     }
 
     public Object callbackWithException() {
-        ((Object) null).toString();
-        return null;
+        throw new RuntimeException("Test Exception");
     }
 
     @Test(expected = V8ScriptExecutionException.class)
@@ -122,8 +123,8 @@ public class V8ScriptExecutionExceptionTest {
             v8.registerJavaMethod(this, "voidCallbackWithException", "voidCallback", new Class<?>[] {});
             v8.executeVoidScript("voidCallback()");
         } catch (V8ScriptExecutionException e) {
-            assertEquals("Unhandled Java Exception", e.getJSMessage());
-            assertTrue(e.getCause() instanceof NullPointerException);
+            assertEquals("Test Exception", e.getJSMessage());
+            assertTrue(e.getCause() instanceof RuntimeException);
             throw e;
         }
     }
@@ -134,8 +135,8 @@ public class V8ScriptExecutionExceptionTest {
             v8.registerJavaMethod(this, "callbackWithException", "callback", new Class<?>[] {});
             v8.executeVoidScript("callback()");
         } catch (V8ScriptExecutionException e) {
-            assertEquals("Unhandled Java Exception", e.getJSMessage());
-            assertTrue(e.getCause() instanceof NullPointerException);
+            assertEquals("Test Exception", e.getJSMessage());
+            assertTrue(e.getCause() instanceof RuntimeException);
             throw e;
         }
     }

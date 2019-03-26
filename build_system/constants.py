@@ -12,7 +12,9 @@ vendor_debian = 'debian'
 # target architectures
 arch_x86 = 'x86'
 arch_x64 = 'x64'
+arch_x86_64 = 'x86_64'
 arch_arm = 'arm'
+arch_arm64 = 'arm64'
 
 # atomic build-steps
 build_node_js = 'nodejs'
@@ -22,6 +24,7 @@ build_j2v8_cpp = 'j2v8cpp'
 build_j2v8_optimize = 'j2v8optimize'
 build_j2v8_java = 'j2v8java'
 build_j2v8_test = 'j2v8test'
+build_j2v8_release = 'j2v8release'
 
 # aliases
 build_java = 'java'

@@ -3,6 +3,7 @@ import atexit
 import re
 import subprocess
 import sys
+import platform
 
 from build_structures import BuildSystem, BuildStep
 import constants as c
@@ -31,12 +32,12 @@ class DockerBuildSystem(BuildSystem):
             # NOTE: the additional newlines are important for the regex matching
             version_str = utils.execute_to_str("docker version") + "\n\n"
 
-            server_match = re.search(r"Server:(.*)\n\n", version_str + "\n\n", re.DOTALL)
+            docker_version_match = re.search(r"Client:(.*)\n\n", version_str + "\n\n", re.DOTALL)
 
-            if (server_match is None or server_match.group(1) is None):
+            if (docker_version_match is None or docker_version_match.group(1) is None):
                 utils.cli_exit("ERROR: Unable to determine docker server version from version string: \n\n" + version_str)
 
-            version_match = re.search(r"^  OS/Arch:\s+(.*)$", server_match.group(1), re.MULTILINE)
+            version_match = re.search(r"OS/Arch:\s+(.*)$", docker_version_match.group(1), re.MULTILINE)
 
             if (version_match is None):
                 utils.cli_exit("ERROR: Unable to determine docker server platform from version string: \n\n" + version_str)
@@ -44,6 +45,8 @@ class DockerBuildSystem(BuildSystem):
             docker_version = version_match.group(1)
 
             docker_req_platform = "windows" if utils.is_win32(config.platform) else "linux"
+            if (platform.system() == "Darwin"):
+                docker_req_platform = "darwin/amd64"
 
             # check if the docker engine is running the expected container platform (linux or windows)
             if (docker_req_platform not in docker_version):
@@ -103,7 +106,7 @@ class DockerBuildSystem(BuildSystem):
         image_name = self.get_image_name(config)
 
         print ("Building docker image: " + config.inject_env(image_name))
-        self.exec_host_cmd("docker build " + args_str + " -f $PLATFORM/Dockerfile -t \"" + image_name + "\" .", config)
+        self.exec_host_cmd("docker build " + args_str + " -f $PLATFORM/Dockerfile -t \"" + image_name + "\" . ", config)
 
     def exec_build(self, config):
         print ("DOCKER running " + config.platform + "@" + config.arch + " => " + config.name)
@@ -128,7 +131,7 @@ class DockerBuildSystem(BuildSystem):
         image_name = self.get_image_name(config)
         container_name = self.get_container_name(config)
 
-        docker_run_str = "docker run " + extra_options + " -P -v $CWD:" + mount_point + \
+        docker_run_str = "docker run " + extra_options + " -e MAVEN_REPO_USER=$MAVEN_REPO_USER -e MAVEN_REPO_PASS=$MAVEN_REPO_PASS -P -v $CWD:" + mount_point + \
             " --name " + container_name + " " + image_name + " " + shell_invoke + " \"cd $BUILD_CWD" + cmd_separator + " " + build_cmd + "\""
 
         docker_run_str = self.inject_env(docker_run_str, config)

@@ -47,7 +47,9 @@ public class V8ObjectTest {
     @After
     public void tearDown() {
         try {
-            v8.close();
+            if (v8 != null) {
+                v8.close();
+            }
             if (V8.getActiveRuntimes() != 0) {
                 throw new IllegalStateException("V8Runtimes not properly released");
             }
@@ -1836,6 +1838,15 @@ public class V8ObjectTest {
         V8Value object = new V8Object(v8).setWeak();
 
         assertTrue(object.isWeak());
+    }
+
+    @SuppressWarnings("resource")
+    @Test
+    public void testClearWeakMakesObjectWeak() {
+        V8Value object = new V8Object(v8).setWeak().clearWeak();
+
+        assertFalse(object.isWeak());
+        object.close();
     }
 
 }
